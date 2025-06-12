@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HexCalc - The Aman's  Calculator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.5); }
+        }
+        
+        .calculator {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+            width: 350px;
+            height: 500px;
+            transform: perspective(1000px) rotateX(10deg);
+            transition: all 0.3s ease;
+        }
+        
+        .calculator:hover {
+            transform: perspective(1000px) rotateX(0deg) scale(1.02);
+        }
+        
+        .display {
+            background: rgba(0, 0, 0, 0.7);
+            color: #00ff88;
+            font-size: 2.2em;
+            font-weight: 700;
+            text-align: right;
+            padding: 20px;
+            margin: 0 0 25px 0;
+            border-radius: 15px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            border: 2px solid #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            word-wrap: break-word;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .display.shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .display.bounce {
+            animation: bounce 0.3s ease;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        
+        .btn {
+            background: linear-gradient(145deg, #2a2a4a, #1a1a3a);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn.operator {
+            background: linear-gradient(145deg, #ff6b6b, #e74c3c);
+            color: white;
+        }
+        
+        .btn.number {
+            background: linear-gradient(145deg, #4ecdc4, #26d0ce);
+        }
+        
+        .btn.function {
+            background: linear-gradient(145deg, #45b7d1, #3498db);
+        }
+        
+        .btn.equals {
+            background: linear-gradient(145deg, #f39c12, #e67e22);
+            grid-column: span 2;
+            border-radius: 30px;
+            width: 132px;
+        }
+        
+        .btn.zero {
+            grid-column: span 2;
+            border-radius: 30px;
+            width: 132px;
+        }
+        
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            pointer-events: none;
+        }
+        
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        .theme-switcher {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 5px 15px;
+            color: white;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-switcher:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .easter-egg {
+            position: fixed;
+            font-size: 3em;
+            pointer-events: none;
+            z-index: 1000;
+            animation: float-away 2s ease-out forwards;
+        }
+        
+        @keyframes float-away {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(2);
+                opacity: 0;
+            }
+        }
+        
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            animation: firework 1s ease-out forwards;
+        }
+        
+        @keyframes firework {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .mood-message {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            opacity: 0;
+            animation: mood-popup 3s ease-in-out;
+        }
+        
+        @keyframes mood-popup {
+            0%, 100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            20%, 80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        /* Theme variations */
+        .theme-retro {
+            background: #001100 !important;
+            color: #00ff00 !important;
+            font-family: 'Courier New', monospace !important;
+        }
+        
+        .theme-retro .display {
+            background: #000 !important;
+            color: #00ff00 !important;
+            border-color: #00ff00 !important;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5) !important;
+        }
+        
+        .theme-rainbow .btn {
+            animation: rainbow 3s linear infinite;
+        }
+        
+        @keyframes rainbow {
+            0% { background: linear-gradient(145deg, #ff6b6b, #e74c3c); }
+            16% { background: linear-gradient(145deg, #ffa500, #ff8c00); }
+            32% { background: linear-gradient(145deg, #ffff00, #ffd700); }
+            48% { background: linear-gradient(145deg, #00ff00, #32cd32); }
+            64% { background: linear-gradient(145deg, #00ffff, #1e90ff); }
+            80% { background: linear-gradient(145deg, #0000ff, #4169e1); }
+            100% { background: linear-gradient(145deg, #8a2be2, #9370db); }
+        }
+        
+        @media (max-width: 480px) {
+            .calculator {
+                width: 300px;
+                height: 450px;
+                padding: 20px;
+            }
+            
+            .btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1em;
+            }
+            
+            .btn.equals, .btn.zero {
+                width: 112px;
+            }
+            
+            .display {
+                font-size: 1.8em;
+                padding: 15px;
+                min-height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    
+    <div class="calculator" id="calculator">
+        <div class="theme-switcher" id="themeSwitcher">🎨 Theme</div>
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button class="btn function" data-action="clear-all">AC</button>
+            <button class="btn function" data-action="clear">C</button>
+            <button class="btn function" data-action="percentage">%</button>
+            <button class="btn operator" data-action="divide">÷</button>
+            
+            <button class="btn number" data-number="7">7</button>
+            <button class="btn number" data-number="8">8</button>
+            <button class="btn number" data-number="9">9</button>
+            <button class="btn operator" data-action="multiply">×</button>
+            
+            <button class="btn number" data-number="4">4</button>
+            <button class="btn number" data-number="5">5</button>
+            <button class="btn number" data-number="6">6</button>
+            <button class="btn operator" data-action="subtract">−</button>
+            
+            <button class="btn number" data-number="1">1</button>
+            <button class="btn number" data-number="2">2</button>
+            <button class="btn number" data-number="3">3</button>
+            <button class="btn operator" data-action="add">+</button>
+            
+            <button class="btn number zero" data-number="0">0</button>
+            <button class="btn number" data-action="decimal">.</button>
+            <button class="btn equals" data-action="equals">=</button>
+        </div>
+    </div>
+
+    <script>
+        class HexCalc {
+            constructor() {
+                this.display = document.getElementById('display');
+                this.calculator = document.getElementById('calculator');
+                this.currentInput = '0';
+                this.previousInput = '';
+                this.operator = '';
+                this.waitingForOperand = false;
+                this.errorCount = 0;
+                this.clickCount = 0;
+                this.theme = 'default';
+                this.secretSequence = '';
+                this.clearHoldTimer = null;
+                
+                this.initializeStars();
+                this.bindEvents();
+                this.initializeAudio();
+                this.updateTimeBasedColors();
+                
+                // Update colors every minute
+                setInterval(() => this.updateTimeBasedColors(), 60000);
+            }
+            
+            initializeStars() {
+                const starsContainer = document.querySelector('.stars');
+                for (let i = 0; i < 100; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 100 + '%';
+                    star.style.animationDelay = Math.random() * 3 + 's';
+                    starsContainer.appendChild(star);
+                }
+            }
+            
+            initializeAudio() {
+                this.audioContext = null;
+                this.sounds = {
+                    number: 440,
+                    operator: 660,
+                    equals: 880,
+                    error: 220,
+                    celebration: [523, 659, 784, 1047]
+                };
+            }
+            
+            playSound(type) {
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                if (type === 'celebration') {
+                    this.sounds.celebration.forEach((freq, index) => {
+                        setTimeout(() => {
+                            const osc = this.audioContext.createOscillator();
+                            const gain = this.audioContext.createGain();
+                            osc.connect(gain);
+                            gain.connect(this.audioContext.destination);
+                            osc.frequency.value = freq;
+                            osc.type = 'sine';
+                            gain.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                            gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                            osc.start();
+                            osc.stop(this.audioContext.currentTime + 0.3);
+                        }, index * 100);
+                    });
+                } else {
+                    oscillator.frequency.value = this.sounds[type] || 440;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+                    oscillator.start();
+                    oscillator.stop(this.audioContext.currentTime + 0.2);
+                }
+            }
+            
+            updateTimeBasedColors() {
+                const hour = new Date().getHours();
+                let hue = (hour * 15) % 360; // Changes every hour
+                document.documentElement.style.setProperty('--time-hue', hue);
+                
+                const body = document.body;
+                body.style.background = `linear-gradient(45deg, 
+                    hsl(${hue}, 70%, 15%), 
+                    hsl(${(hue + 60) % 360}, 70%, 20%), 
+                    hsl(${(hue + 120) % 360}, 70%, 25%))`;
+                body.style.backgroundSize = '400% 400%';
+            }
+            
+            bindEvents() {
+                // Button clicks
+                this.calculator.addEventListener('click', (e) => {
+                    if (e.target.matches('.btn')) {
+                        this.handleButtonClick(e.target);
+                        this.createRipple(e);
+                    }
+                });
+                
+                // Keyboard support
+                document.addEventListener('keydown', (e) => {
+                    this.handleKeyPress(e);
+                });
+                
+                // Theme switcher
+                document.getElementById('themeSwitcher').addEventListener('click', () => {
+                    this.cycleTheme();
+                });
+                
+                // Long press clear for mini-game
+                const clearBtn = document.querySelector('[data-action="clear"]');
+                clearBtn.addEventListener('mousedown', () => {
+                    this.clearHoldTimer = setTimeout(() => {
+                        this.triggerMiniGame();
+                    }, 3000);
+                });
+                
+                clearBtn.addEventListener('mouseup', () => {
+                    if (this.clearHoldTimer) {
+                        clearTimeout(this.clearHoldTimer);
+                        this.clearHoldTimer = null;
+                    }
+                });
+            }
+            
+            createRipple(e) {
+                const button = e.target;
+                const rect = button.getBoundingClientRect();
+                const ripple = document.createElement('span');
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.className = 'ripple';
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                
+                button.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            }
+            
+            handleButtonClick(button) {
+                this.clickCount++;
+                this.updateButtonColors();
+                
+                if (button.dataset.number) {
+                    this.inputNumber(button.dataset.number);
+                    this.playSound('number');
+                } else if (button.dataset.action) {
+                    this.handleAction(button.dataset.action);
+                }
+                
+                // Check for secret sequences
+                this.secretSequence += button.textContent;
+                this.checkSecretSequences();
+            }
+            
+            handleKeyPress(e) {
+                const key = e.key;
+                
+                if (/[0-9]/.test(key)) {
+                    this.inputNumber(key);
+                    this.playSound('number');
+                } else if (key === '.') {
+                    this.handleAction('decimal');
+                } else if (key === '+') {
+                    this.handleAction('add');
+                    this.playSound('operator');
+                } else if (key === '-') {
+                    this.handleAction('subtract');
+                    this.playSound('operator');
+                } else if (key === '*') {
+                    this.handleAction('multiply');
+                    this.playSound('operator');
+                } else if (key === '/') {
+                    e.preventDefault();
+                    this.handleAction('divide');
+                    this.playSound('operator');
+                } else if (key === '=' || key === 'Enter') {
+                    this.handleAction('equals');
+                } else if (key === 'Escape') {
+                    this.handleAction('clear-all');
+                } else if (key === 'Backspace') {
+                    this.handleAction('clear');
+                }
+            }
+            
+            updateButtonColors() {
+                // Change button colors based on click count
+                const hue = (this.clickCount * 10) % 360;
+                const buttons = document.querySelectorAll('.btn.number');
+                buttons.forEach(btn => {
+                    btn.style.background = `linear-gradient(145deg, hsl(${hue}, 70%, 50%), hsl(${hue}, 70%, 40%))`;
+                });
+            }
+            
+            inputNumber(num) {
+                if (this.waitingForOperand) {
+                    this.currentInput = num;
+                    this.waitingForOperand = false;
+                } else {
+                    this.currentInput = this.currentInput === '0' ? num : this.currentInput + num;
+                }
+                
+                this.updateDisplay();
+                this.display.classList.add('bounce');
+                setTimeout(() => this.display.classList.remove('bounce'), 300);
+            }
+            
+            handleAction(action) {
+                switch (action) {
+                    case 'clear-all':
+                        this.currentInput = '0';
+                        this.previousInput = '';
+                        this.operator = '';
+                        this.waitingForOperand = false;
+                        this.updateDisplay();
+                        break;
+                        
+                    case 'clear':
+                        this.currentInput = '0';
+                        this.updateDisplay();
+                        break;
+                        
+                    case 'decimal':
+                        if (this.currentInput.indexOf('.') === -1) {
+                            this.inputNumber('.');
+                        }
+                        break;
+                        
+                    case 'percentage':
+                        this.currentInput = (parseFloat(this.currentInput) / 100).toString();
+                        this.updateDisplay();
+                        break;
+                        
+                    case 'add':
+                    case 'subtract':
+                    case 'multiply':
+                    case 'divide':
+                        this.handleOperator(action);
+                        this.playSound('operator');
+                        break;
+                        
+                    case 'equals':
+                        this.calculate();
+                        break;
+                }
+            }
+            
+            handleOperator(nextOperator) {
+                const inputValue = parseFloat(this.currentInput);
+                
+                if (this.previousInput === '') {
+                    this.previousInput = inputValue;
+                } else if (this.operator) {
+                    const currentValue = this.previousInput || 0;
+                    const newValue = this.performCalculation(currentValue, inputValue, this.operator);
+                    
+                    this.currentInput = String(newValue);
+                    this.previousInput = newValue;
+                    this.updateDisplay();
+                }
+                
+                this.waitingForOperand = true;
+                this.operator = nextOperator;
+            }
+            
+            calculate() {
+                const inputValue = parseFloat(this.currentInput);
+                
+                if (this.previousInput !== '' && this.operator) {
+                    const currentValue = this.previousInput || 0;
+                    const newValue = this.performCalculation(currentValue, inputValue, this.operator);
+                    
+                    this.currentInput = String(newValue);
+                    this.previousInput = '';
+                    this.operator = '';
+                    this.waitingForOperand = true;
+                    this.updateDisplay();
+                    
+                    // Celebration effects
+                    this.playSound('celebration');
+                    this.createFireworks();
+                }
+            }
+            
+            performCalculation(firstOperand, secondOperand, operator) {
+                switch (operator) {
+                    case 'add':
+                        return firstOperand + secondOperand;
+                    case 'subtract':
+                        return firstOperand - secondOperand;
+                    case 'multiply':
+                        return firstOperand * secondOperand;
+                    case 'divide':
+                        if (secondOperand === 0) {
+                            this.showError("🤯 Infinity?");
+                            return 0;
+                        }
+                        return firstOperand / secondOperand;
+                    default:
+                        return secondOperand;
+                }
+            }
+            
+            updateDisplay() {
+                this.display.textContent = this.currentInput;
+            }
+            
+            showError(message) {
+                this.display.textContent = message;
+                this.display.classList.add('shake');
+                this.playSound('error');
+                this.errorCount++;
+                
+                setTimeout(() => {
+                    this.display.classList.remove('shake');
+                    if (message !== "🤯 Infinity?") {
+                        this.currentInput = '0';
+                        this.updateDisplay();
+                    }
+                }, 1000);
+                
+                // Mood system
+                if (this.errorCount >= 3) {
+                    this.showMoodMessage();
+                    this.errorCount = 0;
+                }
+            }
+            
+            showMoodMessage() {
+                const messages = [
+                    "Don't worry, math is hard! 🤗",
+                    "You've got this! 💪",
+                    "Everyone makes mistakes! 😊",
+                    "Keep trying! 🌟",
+                    "Math can be tricky! 🧮"
+                ];
+                
+                const message = messages[Math.floor(Math.random() * messages.length)];
+                const messageElement = document.createElement('div');
+                messageElement.className = 'mood-message';
+                messageElement.textContent = message;
+                
+                this.calculator.appendChild(messageElement);
+                
+                setTimeout(() => {
+                    messageElement.remove();
+                }, 3000);
+            }
+            
+            checkSecretSequences() {
+                // Keep only last 10 characters
+                if (this.secretSequence.length > 10) {
+                    this.secretSequence = this.secretSequence.slice(-10);
+                }
+                
+                // Easter eggs
+                if (this.secretSequence.includes('5318008')) {
+                    this.showEasterEgg('🔄 BOOBIES!');
+                    this.secretSequence = '';
+                } else if (this.secretSequence.includes('0÷0')) {
+                    this.showEasterEgg('🤯');
+                    this.secretSequence = '';
+                } else if (this.secretSequence.includes('#*+')) {
+                    this.cycleTheme();
+                    this.secretSequence = '';
+                }
+            }
+            
+            showEasterEgg(emoji) {
+                const easterEgg = document.createElement('div');
+                easterEgg.className = 'easter-egg';
+                easterEgg.textContent = emoji;
+                easterEgg.style.left = Math.random() * window.innerWidth + 'px';
+                easterEgg.style.top = Math.random() * window.innerHeight + 'px';
+                
+                document.body.appendChild(easterEgg);
+                
+                setTimeout(() => {
+                    easterEgg.remove();
+                }, 2000);
+            }
+            
+            createFireworks() {
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f39c12', '#9b59b6'];
+                
+                for (let i = 0; i < 15; i++) {
+                    setTimeout(() => {
+                        const firework = document.createElement('div');
+                        firework.className = 'firework';
+                        firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+                        firework.style.left = Math.random() * window.innerWidth + 'px';
+                        firework.style.top = Math.random() * window.innerHeight + 'px';
+                        
+                        document.body.appendChild(firework);
+                        
+                        setTimeout(() => {
+                            firework.remove();
+                        }, 1000);
+                    }, i * 100);
+                }
+            }
+            
+            cycleTheme() {
+                const themes = ['default', 'retro', 'rainbow'];
+                const currentIndex = themes.indexOf(this.theme);
+                this.theme = themes[(currentIndex + 1) % themes.length];
+                
+                // Remove all theme classes
+                this.calculator.classList.remove('theme-retro', 'theme-rainbow');
+                
+                // Apply new theme
+                if (this.theme !== 'default') {
+                    this.calculator.classList.add(`theme-${this.theme}`);
+                }
+                
+                // Update theme switcher text
+                const switcher = document.getElementById('themeSwitcher');
+                const themeEmojis = { default: '🌌', retro: '💚', rainbow: '🌈' };
+                switcher.textContent = `${themeEmojis[this.theme]} ${this.theme.charAt(0).toUpperCase() + this.theme.slice(1)}`;
+            }
+            
+            triggerMiniGame() {
+                alert('🎮 Mini-game activated! Try to solve: What\'s 7 × 8?');
+                this.currentInput = '0';
+                this.updateDisplay();
+                this.createFireworks();
+            }
+        }
+        
+        // Initialize calculator when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new HexCalc();
+        });
+    </script>
+</body>
+</html>
